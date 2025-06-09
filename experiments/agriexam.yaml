@@ -1,0 +1,13 @@
+dataset:
+    name: "agriexam"
+    path: "boilnserve/cabbage"
+    subset: "agricultural_scientific_knowledge"
+    split: "agriexam"
+
+model_input:
+    question_type: multiple_choice
+    pre_prompt: "You will be given a multiple-choice question with options. Select and respond with the correct letter."
+    post_prompt: ""
+
+process_results: 
+    metric: option_match

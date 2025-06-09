@@ -1,0 +1,14 @@
+dataset:
+    name: "wikihow_missing"
+    path: "boilnserve/cabbage"
+    subset: "agricultural_procedural_reasoning"
+    split: "wikihow_missing"
+
+model_input:
+    question_type: multiple_choice
+    pre_prompt: "You will be asked a multiple-choice question about a procedure. There are four options: A, B, C, and D. Select and respond with the correct answer."
+    post_prompt: ""
+
+process_results: 
+    metric: option_match
+    

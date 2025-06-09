@@ -1,0 +1,16 @@
+dataset:
+    name: "eppo_diff_1"
+    path: "boilnserve/cabbage"
+    subset: "agronomic_visual_cognition"
+    split: "eppo"
+    filters:
+        difficulty: diff_1
+
+model_input:
+    question_type: multiple_choice
+    difficulty: diff_1
+    pre_prompt: "You will be shown an image and asked a multiple-choice question about it. There are four options: A, B, C, and D. Select and respond with the correct answer."
+    post_prompt: ""
+
+process_results: 
+    metric: option_match

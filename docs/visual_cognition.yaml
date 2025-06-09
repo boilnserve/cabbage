@@ -1,0 +1,90 @@
+experiments:
+  limit: null
+  base_dir: experiments
+  use_all: false  # overrides dataset filtering
+  datasets:
+    - bppq
+    - eppo_diff_1
+    - eppo_diff_3
+    - eppo_diff_5
+    - plantnet_single
+    - plantnet_multi
+
+models:
+  results_directory: results
+
+  default_parameters:
+    max_new_tokens: 1024
+    temperature: 0.2
+
+  providers:
+    - name: openai-mini
+      model: gpt-4o-mini
+      provider: openai
+      base_url: https://api.openai.com/v1
+      api_key: OPENAI_API_KEY
+
+    - name: openai-standard
+      model: gpt-4o
+      provider: openai
+      base_url: https://api.openai.com/v1
+      api_key: OPENAI_API_KEY
+
+    - name: gemini-lite
+      model: gemini-2.0-flash-lite-preview-02-05
+      provider: google
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: GOOGLE_API_KEY
+
+    - name: gemini-standard
+      model: gemini-2.0-flash-001
+      provider: google
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: GOOGLE_API_KEY
+
+    - name: qwen-vl-7b
+      model: Qwen/Qwen2-VL-7B-Instruct
+      provider: local
+      base_url: http://127.0.0.1:8000/v1
+      api_key: null
+      timeout: 120
+      server_args:
+        chat_template: qwen2-vl
+        dp_size: 6
+        tp_size: 1
+
+    - name: qwen-vl-72b
+      model: Qwen/Qwen2-VL-72B-Instruct
+      provider: local
+      base_url: http://127.0.0.1:8000/v1
+      api_key: null
+      timeout: 400
+      server_args:
+        chat_template: qwen2-vl
+        dp_size: 1
+        tp_size: 4
+
+evaluators:
+  default_parameters:
+    max_new_tokens: 2048
+    temperature: 0.0
+  providers:
+    - name: openai-mini
+      model: gpt-4o-mini
+      base_url: https://api.openai.com/v1
+      api_key: OPENAI_API_KEY
+
+    - name: openai-standard
+      model: gpt-4o
+      base_url: https://api.openai.com/v1
+      api_key: OPENAI_API_KEY
+
+    - name: gemini-lite
+      model: gemini-2.0-flash-lite-preview-02-05
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: GOOGLE_API_KEY
+
+    - name: gemini-standard
+      model: gemini-2.0-flash-001
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: GOOGLE_API_KEY

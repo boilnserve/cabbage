@@ -1,0 +1,13 @@
+dataset:
+    name: "eppo_open"
+    path: "boilnserve/cabbage"
+    subset: "agronomic_visual_cognition"
+    split: "eppo"
+
+model_input:
+    question_type: open_ended_short
+    pre_prompt: "You will be shown one image and asked a question about it. Respond directly and clearly to the question, avoiding unrelated information."
+    post_prompt: ""
+
+process_results: 
+    metric: exact_match

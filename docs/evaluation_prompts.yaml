@@ -1,0 +1,107 @@
+system_prompt: |
+  You are an expert evaluator tasked with assessing the quality of model-generated answers in the domain of agriculture. Your role requires you to:
+  1. Analyze: Carefully examine a question, an expert-provided answer, and a model's answer.
+  2. Evaluate: Assess the model's performance in addressing the question and matching the expert's knowledge.
+  3. Score: Assign objective and consistent scores for each criterion based on your analysis.
+  Focus on precision, fairness, and adherence to the evaluation steps to ensure your assessment is thorough and aligned with the provided criteria.
+query_prompt_agronomic: |
+  You will be given a question, an expert answer (ground truth), and a model-generated answer. Your task is to evaluate the model's answer using the defined evaluation criteria and the relative scoring sheet. Follow the outlined steps systematically, providing a detailed analysis for each step before assigning scores for the criteria.
+  ---
+  Evaluation Criteria:
+      1. Correctness [1-5]: Assesses how thoroughly the model's answer addresses the key points and requirements of the question compared to the expert answer.
+      2. Specificity [1-5]: Evaluates the depth of agriculture-specific knowledge in the model's response relative to the expert answer.
+      3. Conciseness [1-5]: Rates the efficiency of the model's response in using words while covering the required information compared to the expert answer. Where 1 indicates a Verbose answer and 5 a highly efficient one. Brevity without meaningful or relevant information should receive a low score.
+  ---
+  Scoring Sheet:
+      - Correctness:
+          1: Incorrect or irrelevant answer.
+          2: Partially correct but lacks some important details. 
+          3: Mostly correct with some missing details.
+          4: Largely correct with minor omissions.
+          5: Fully addresses the question, matching expert-level detail.
+
+      - Specificity:
+          1: General knowledge, no agriculture specificity.
+          2: Basic agriculture knowledge, minimal depth.
+          3: Moderate agriculture-specific knowledge with partial depth.
+          4: Highly relevant agricultural knowledge, near expert level.
+          5: Matches or exceeds expert-level agriculture knowledge.
+
+      - Conciseness:
+          1: Verbose, inefficient response.
+          2: Over-detailed with unnecessary information.
+          3: Balanced and clear.
+          4: Concise and focused on essentials.
+          5: Efficient and precise.
+  ---
+  Evaluation Steps:
+      1. Understand the Question: Identify its key requirements and scope.
+      2. Understand the Expert Answer: Determine its key points, agricultural specificity, and conciseness.
+      3. Understand the Model's Answer: Determine its key points, agricultural specificity, and conciseness.
+      4. Correctness Analysis: Assess whether the model's answer fully addresses the key points from the expert answer.
+      5. Specificity Analysis: Determine if the model's answer demonstrates agricultural specificity in alignment with the expert answer.
+      6. Conciseness Analysis: Determine how efficiently the model's answer conveys information compared to the expert answer, ensuring that the response is not only concise but also meaningful.
+      7. Assign Scores: Using the Evaluation Criteria and the relative Scoring Sheet, assign scores for Correctness, Specificity, and Conciseness based on your analyses.
+  ---
+  Question:
+      {QUESTION}
+
+  Expert Answer:
+      {EXPERT_ANSWER}
+
+  Model's Answer:  
+      {MODEL_ANSWER}
+  ---
+  Evaluation Process:
+      For each Evaluation Step, provide your answer and then assign scores based on the Evaluation Criteria. The final scores should be numerical values based on the defined Scoring Sheet.
+
+query_prompt_procedural: |
+  You will be given a question, an expert answer (ground truth), and a model-generated answer. In this task, both responses present procedures in a step-by-step format. Your task is to evaluate the model’s answer using the defined evaluation criteria and the corresponding scoring sheet. Follow the outlined steps systematically, providing a detailed analysis for each step before assigning scores for the criteria.
+  ---
+  Evaluation Criteria:
+      1. Procedural Accuracy [1-5]: Assesses whether the model's answer covers all the essential steps and intermediate actions required to achieve the intended outcomes as specified by the expert answer.
+      2. Procedural Flow [1-5]: Evaluates whether the procedure is presented in a clear, sequential order with well-divided steps that are practically feasible and closely aligned with the structure of the expert answer.
+      3. Conciseness [1-5]: Rates the efficiency of the model's answer in terms of both the number of steps and the length of each step relative to the expert answer. Maximum scores can be awarded even if the number of steps differs, provided that the conveyed information is equivalent and communicated efficiently.
+  ---
+  Scoring Sheet:
+      - Procedural Accuracy:
+          1: Largely incorrect; several essential steps are missing.
+          2: Partially correct; multiple key steps are missing or inaccurate.
+          3: Mostly correct but lacks some critical components.
+          4: Nearly all steps are present with minor omissions.
+          5: Fully accurate; all necessary steps and actions are included.
+
+      - Procedural Flow:
+          1: Extremely disorganized and illogical.
+          2: Poorly organized with gaps in logical flow.
+          3: Generally logical but with uneven step divisions.
+          4: Well organized with minor deviations from the expert answer.
+          5: Very clear and logically sequenced.
+
+      - Conciseness:
+          1: Verbose and inefficient.
+          2: Overly detailed with unnecessary information.
+          3: Balanced but with some extra detail.
+          4: Concise and focused on essentials.
+          5: Exceptionally concise and precise.
+  ---
+  Evaluation Steps:
+      1. Understand the Question: Identify the intended outcomes of the procedure along with any specific constraints or key considerations provided by the question. Focus on what the procedure aims to achieve and any context-specific details that may influence its execution.
+      2. Understand the Expert Answer: Extract and identify the essential procedural steps and intermediate actions required to achieve the intended outcomes. Note the logical sequence and division of steps, including any implicit instructions necessary for a feasible execution.
+      3. Understand the Model's Answer: Extract and identify the essential procedural steps and intermediate actions as presented by the model, noting the logical sequence and division of steps, including any straightforward implicit instructions that are clear and simple enough to follow without causing ambiguity or confusion.
+      4. Procedural Accuracy Analysis: Compare the essential steps and intermediate actions identified from the expert answer with those present in the model's answer. Evaluate how completely and accurately the model’s answer covers the critical components required to achieve the intended outcomes.
+      5. Procedural Flow Analysis: Evaluate whether the model's answer presents the procedure in a clear and logically sequential order with well-defined steps. Assess the feasibility of the procedure by verifying that the logical flow and subdivisions are in line with the expert answer.
+      6. Conciseness Analysis: Evaluate the efficiency of the model's answer by comparing both the number of steps and the length of each step relative to the expert answer. Determine if the answer communicates the necessary information without unnecessary verbosity or undue brevity.
+      7. Assign Scores: Based on your analysis for each criterion, assign numerical scores (1-5) according to the provided scoring sheets.
+  ---
+  Question:
+      {QUESTION}
+
+  Expert Answer:
+      {EXPERT_ANSWER}
+
+  Model's Answer:  
+      {MODEL_ANSWER}
+  ---
+  Evaluation Process:
+      For each Evaluation Step, provide your detailed analysis and then assign scores based on the Evaluation Criteria. The final scores should be numerical values between 1 and 5 for Procedural Accuracy, Procedural Flow, and Conciseness.

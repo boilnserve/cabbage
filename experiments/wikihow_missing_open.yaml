@@ -1,0 +1,17 @@
+dataset:
+    name: "wikihow_missing_open"
+    path: "boilnserve/cabbage"
+    subset: "agricultural_procedural_reasoning"
+    split: "wikihow_missing"
+
+model_input:
+    question_type: open_ended_long
+    pre_prompt: "You will be given an open-ended question about a procedure. Respond fully and clearly to the question, avoiding unrelated information."
+    post_prompt: ""
+
+process_results: 
+    metric: g_eval
+    evaluation_type: procedural
+    
+
+    
