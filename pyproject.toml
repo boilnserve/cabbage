@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm_eval"
+version = "0.1.0"
+description = "Evaluate LLMs on benchmarks"
+readme = "README.md"
+dependencies = [
+    "datasets",
+    "loguru",
+    "numpy",
+    "openai",
+    "Pillow",
+    "pydantic",
+    "python-dotenv",
+    "PyYAML",
+    "Requests",
+    "sglang[all]",
+    "torch",
+    "tqdm"
+]
+requires-python = ">=3.8"
+
+[project.scripts]
+llm_eval = "llm_eval.run_pipeline:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
