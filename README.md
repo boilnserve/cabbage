@@ -55,8 +55,9 @@ You can also create or modify additional YAML files within the `docs/` and `expe
 ## 🏃 Usage
 
 After setup and configuration, run your experiment with:
-
-llm_eval -c docs/all_experiments.yaml
+    ```sh
+    llm_eval -c docs/all_experiments.yaml
+    ```
 
 This will execute the pipeline as defined in your YAML configuration.
 
