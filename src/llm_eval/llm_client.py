@@ -1,62 +1,25 @@
-import base64
+
 import os
 import time
 import asyncio
-import itertools
-from copy import deepcopy
-from io import BytesIO
-from typing import Any, List, Literal, Optional, Tuple, Type, Union, Dict
-from generate_requests import ExperimentRequest
-
 import openai
 import tqdm.asyncio
-from PIL import Image
-from pydantic import BaseModel, Field, create_model
+
+from typing import Any, List, Dict
 from loguru import logger as log
 
-#----------Response Classes------------
-
-from pydantic import BaseModel
-from typing import Literal
-
-
-class ReasoningAnswer(BaseModel):
-    reasoning: str
-    answer: str
-
-
-class ReasoningAnswerLetter(BaseModel):
-    reasoning: str
-    answer: Literal["A", "B", "C", "D", "E"]
-
-
-class ReasoningLongAnswer(BaseModel):
-    reasoning: str
-    answer: str
-
-ParsedResponse = Union[ReasoningAnswer, ReasoningAnswerLetter, ReasoningLongAnswer]
-
-RESPONSE_MODEL_MAP = {
-        "open_ended_short": ReasoningAnswer,
-        "multiple_choice": ReasoningAnswerLetter,
-        "open_ended_long": ReasoningLongAnswer,
-    }
+from llm_eval.request_generation import ExperimentInput
+from llm_eval.utils.image_utils import encode_image
+from llm_eval.structured_output.response_types import RESPONSE_MODEL_MAP
 
 # ---------- Constants ----------
 NUM_SECONDS_TO_SLEEP = 5
 RETRIES = 3
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-
 # ---------- Client Class ----------
-class OpenAIClient:
-    def __init__(
-        self,
-        model_name: str,
-        base_url: str = "",
-        api_key: str = "None",
-        timeout: int = 120,
-    ):
+class LLMClient:
+    def __init__( self, model_name: str, base_url: str = "", api_key: str = "None", timeout: int = 120) -> None:
         self.model_name = model_name
         self.timeout = timeout
         self.api_key = api_key
@@ -64,15 +27,8 @@ class OpenAIClient:
         self.system_prompt = "You are a helpful assistant."
         self.client = openai.AsyncClient(base_url=self.base_url, api_key=self.api_key, timeout=self.timeout)
 
-    # ---------- Image Processing ----------
-    @staticmethod
-    def _encode_image(image: Image.Image) -> str:
-        buffer = BytesIO()
-        image.save(buffer, format="PNG")
-        return base64.b64encode(buffer.getvalue()).decode("utf-8")
-
     # ---------- Payload Assembly ----------
-    def _build_payload(self, prompt: str, images: List[str]) -> dict:
+    def _build_payload(self, prompt: str, images: List[str]) -> Dict:
         content = [{"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img}"}} for img in images]
         content.append({"type": "text", "text": prompt})
 
@@ -89,14 +45,11 @@ class OpenAIClient:
         gen_kwargs.setdefault("max_new_tokens", 1024)
         gen_kwargs["max_new_tokens"] = min(gen_kwargs["max_new_tokens"], 4096)
         gen_kwargs.setdefault("temperature", 0.0)
-
+    
     # ---------- Generation ----------
-    async def _generate_single(
-        self,
-        request: ExperimentRequest,
-        client: Any
-    ) -> Dict:
-        encoded_images = [self._encode_image(img) for img in request.visuals]
+    async def _generate_single(self, request: ExperimentInput, client: openai.AsyncClient) -> Dict:
+        
+        encoded_images = [encode_image(img) for img in request.visuals]
         payload = self._build_payload(request.input, encoded_images)
         self._update_generation_params(request.gen_kwargs)
 
@@ -115,7 +68,11 @@ class OpenAIClient:
                     **payload, response_format=response_model
                 )
                 parsed_response = response.choices[0].message.parsed
-                return {'reasoning' : parsed_response.reasoning, 'model_answer' : parsed_response.answer}
+                
+                if parsed_response is not None:
+                    return {'reasoning': getattr(parsed_response, 'reasoning', None), 'model_answer': getattr(parsed_response, 'answer', None)}
+                else:
+                    return {'error': 'Parsed response is None'}
             except Exception as e:
                 log.warning(f"Attempt {attempt+1} failed: {e}")
                 if attempt < RETRIES - 1:
@@ -126,8 +83,9 @@ class OpenAIClient:
         # Fail-safe fallback (should never be reached)
         return {'error' : f'{last_error}'}
 
-    def generate_until(self, requests: List[ExperimentRequest]) -> List[Dict]:
+    def generate_until(self, requests: List[ExperimentInput]) -> List[Dict]:
         async def _run_all():
-            tasks = [self._generate_single(request, self.client) for request in requests]
-            return await tqdm.asyncio.tqdm_asyncio.gather(*tasks, desc=f"[{self.model_name}] Generating")
+            async with openai.AsyncClient(base_url=self.base_url,api_key=os.getenv(self.api_key)) as client:
+                tasks = [self._generate_single(request, client) for request in requests]
+                return await tqdm.asyncio.tqdm_asyncio.gather(*tasks, desc=f"[{self.model_name}] Generating")
         return asyncio.run(_run_all())

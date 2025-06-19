@@ -1,115 +1,41 @@
 import os
-import re
 import time
-import math
 import json
-import yaml
 import openai
-from typing import List, Dict, Optional, Callable, Tuple, Awaitable, Union
+import tqdm.asyncio
+import asyncio
+from typing import List, Dict, Optional, Callable, Tuple, Awaitable, Any
 from loguru import logger
-from evaluation_classes import EvaluationProcess, EvaluationProcessProcedural
+from llm_eval.structured_output.evaluation_types import EvaluationProcess, EvaluationProcessProcedural
+from llm_eval.utils.geval import extract_geval_scores
+from llm_eval.utils.formatting import extract_evaluation_step_titles
+from llm_eval.utils.configuration import EvaluatorConfig
 
 # Constants
 NUM_SECONDS_TO_SLEEP = 10
 RETRIES = 5
-TEMP = 5
-SCORES = ['1', '2', '3', '4', '5']
 
-# Get the absolute path to the 'docs' directory
-docs_path = os.path.join(os.path.dirname(__file__), '..', 'docs', 'evaluation_prompts.yaml')
-
-
-# Load prompts
-with open(docs_path, 'r') as file:
-    PROMPT_DICT: Dict[str, str] = yaml.safe_load(file)
-
-
-# --- Utility Functions ---
-
-def find_score_token_index(target_word: str, tokens: List) -> Optional[int]:
-    """Finds the index of the score token in a token sequence."""
-    reconstructed = ""
-    token_map = []
-
-    for i, token in enumerate(tokens):
-        token_map.append((i, len(reconstructed)))
-        reconstructed += token.token
-
-    match = re.search(target_word, reconstructed)
-    if match:
-        end = match.end()
-        for idx, (token_index, start) in enumerate(token_map):
-            if start >= end and tokens[token_index].token.isdigit():
-                return token_index
-
-    logger.warning(f"'{target_word}' not found in token stream.")
-    return None
-
-
-def compute_geval_score(top_logprobs, valid_scores: List[str] = SCORES, temp: float = TEMP) -> float:
-    """Computes weighted score from token logprobs."""
-    probs = {
-        tok.token: math.exp(tok.logprob / temp)
-        for tok in top_logprobs if tok.token in valid_scores
-    }
-
-    total_prob = sum(probs.values())
-    normalized = {k: v / total_prob for k, v in probs.items()}
-
-    return sum(int(k) * v for k, v in normalized.items())
-
-
-def extract_geval_scores(completion) -> Dict[str, float]:
-    """Extract G-Eval scores from model completion."""
-    raw_scores = json.loads(completion.choices[0].message.content)['scores']
-    score_names = list(raw_scores.keys())
-
-    token_indices = [
-        find_score_token_index(name, completion.choices[0].logprobs.content)
-        for name in score_names
-    ]
-
-    if any(idx is None for idx in token_indices):
-        raise ValueError("Failed to locate all score tokens in completion.")
-
-    return {
-        name: compute_geval_score(completion.choices[0].logprobs.content[idx].top_logprobs)
-        for name, idx in zip(score_names, token_indices)
-    }
-
-
-def extract_evaluation_step_titles(text: str) -> List[str]:
-    """Extract step titles from evaluation content."""
-    match = re.search(r"Evaluation Steps:\n(.*?)\n---", text, re.DOTALL)
-    if not match:
-        return []
-
-    steps_text = match.group(1)
-    return [f"{num}. {title}" for num, title in re.findall(r"(\d+)\.\s*(.*?):", steps_text)]
-
-
-# --- Main Evaluation Class ---
-
-class GEvaluator:
-    def __init__(self, provider: Dict[str, str], evaluation_type: str) -> None:
-        self.model_name = provider['model']
-        self.client = openai.AsyncClient(
-            base_url=provider['base_url'],
-            api_key=os.getenv(provider['api_key'])
-        )
-        self.system_prompt = PROMPT_DICT.get("system_prompt", "")
+class LLMJudge:
+    def __init__(self, evaluator: EvaluatorConfig, evaluation_type: Optional[str], prompts_dict: Dict) -> None:
+        self.model_name = evaluator.model
+        # self.client = openai.AsyncClient(
+        #     base_url=evaluator.base_url,
+        #     api_key=os.getenv(evaluator.api_key)
+        # )
+        self.evaluator = evaluator
+        self.system_prompt = prompts_dict.get("system_prompt", "")
 
         self.query_template: str
         if evaluation_type == 'knowledge':
-            self.query_template = PROMPT_DICT.get("query_prompt_agronomic", "")
+            self.query_template = prompts_dict.get("query_prompt_knowledge", "")
             self.evaluation_process = EvaluationProcess
         elif evaluation_type == 'procedural':
-            self.query_template = PROMPT_DICT.get("query_prompt_procedural", "")
+            self.query_template = prompts_dict.get("query_prompt_procedural", "")
             self.evaluation_process = EvaluationProcessProcedural
         else:
             raise ValueError(f"Unknown evaluation type: {evaluation_type}")
 
-        self._response_handler: Callable[[str], Awaitable[Tuple]]
+        self._response_handler: Callable[[str, Any], Awaitable[Tuple]]
         for key in ("gpt", "deepseek", "gemini"):
             if key in self.model_name:
                 self._response_handler = getattr(self, f"_handle_{key}")
@@ -145,9 +71,10 @@ class GEvaluator:
                 else:
                     logger.error(f"All retries failed. Last error: {e}")
         return "",""
-    async def _handle_deepseek(self, content: str) -> Tuple:
+    
+    async def _handle_deepseek(self, content: str, client) -> Tuple:
         async def call():
-            completion = await self.client.chat.completions.create(
+            completion = await client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
@@ -167,9 +94,9 @@ class GEvaluator:
 
         return await self._retry_with_backoff(call)
 
-    async def _handle_gpt(self, content: str) -> Tuple:
+    async def _handle_gpt(self, content: str, client) -> Tuple:
         async def call():
-            completion = await self.client.beta.chat.completions.parse(
+            completion = await client.beta.chat.completions.parse(
                 model=self.model_name,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
@@ -186,9 +113,9 @@ class GEvaluator:
 
         return await self._retry_with_backoff(call)
 
-    async def _handle_gemini(self, content: str) -> Tuple:
+    async def _handle_gemini(self, content: str, client) -> Tuple:
         async def call():
-            completion = await self.client.beta.chat.completions.parse(
+            completion = await client.beta.chat.completions.parse(
                 model=self.model_name,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
@@ -208,10 +135,10 @@ class GEvaluator:
 
         return await self._retry_with_backoff(call)
 
-    async def get_response(self, content: str) -> Tuple:
-        return await self._response_handler(content)
+    async def get_response(self, content: str, client) -> Tuple:
+        return await self._response_handler(content, client)
 
-    async def evaluate(self, doc: Dict[str, str], model_output: str) -> Dict:
+    async def evaluate(self, doc: Dict[str, str], model_output: str, client) -> Dict:
         if not model_output:
             logger.error("Empty model output received.")
             return {"scores": "invalid_format"}
@@ -222,7 +149,7 @@ class GEvaluator:
             return {"scores": "invalid_format"}
 
         try:
-            parsed_response, scores = await self.get_response(prompt)
+            parsed_response, scores = await self.get_response(prompt, client)
             if not hasattr(parsed_response, "final_review"):
                 raise AttributeError("Missing 'final_review' in response.")
 
@@ -243,3 +170,10 @@ class GEvaluator:
         except Exception as e:
             logger.exception(f"Evaluation failed: {e}")
             return {"scores": "invalid_format"}
+    
+    def evaluate_until(self, examples: List[Dict]) -> List[Dict]:
+        async def _run_all():
+            async with openai.AsyncClient(base_url=self.evaluator.base_url,api_key=os.getenv(self.evaluator.api_key)) as client:
+                tasks = [self.evaluate(ex['original_doc'], ex['inference_result'].get('model_answer'), client) for ex in examples]
+                return await tqdm.asyncio.tqdm_asyncio.gather(*tasks, desc=f"[{self.model_name}] Generating")
+        return asyncio.run(_run_all())
