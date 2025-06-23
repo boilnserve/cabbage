@@ -1,6 +1,10 @@
+paths:
+  experiments_directory: experiment_configs
+  results_directory: results_visual_cognition
+  evaluation_prompts: docs/evaluation_prompts.yaml
+
 experiments:
-  limit: null
-  base_dir: experiments
+  limit: 100
   use_all: false  # overrides dataset filtering
   datasets:
     - bppq
@@ -11,8 +15,6 @@ experiments:
     - plantnet_multi
 
 models:
-  results_directory: results
-
   default_parameters:
     max_new_tokens: 1024
     temperature: 0.2

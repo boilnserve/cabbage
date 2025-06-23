@@ -1,11 +1,17 @@
+paths:
+  experiments_directory: experiment_configs
+  results_directory: results_little
+  evaluation_prompts: docs/evaluation_prompts.yaml
+
 experiments:
-  limit: null
-  base_dir: experiments
+  limit: 10
   use_all: true  # overrides dataset filtering
+  datasets:
+    - embrapa
+    - agriexam
+    - eppo_diff_1
 
 models:
-  results_directory: results
-
   default_parameters:
     max_new_tokens: 1024
     temperature: 0.2
