@@ -1,40 +1,34 @@
 #!/usr/bin/env python3
 import os
 import argparse
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
-
 import llm_eval.request_generation
 import llm_eval.model_inference
 import llm_eval.results_processing
 import llm_eval.results_aggregation
+from llm_eval.utils.configuration import load_main_config
 # General TODO
-            #   1. Add metric judges_agreement/consensus
-            #   2. Save judge processing for each model each time a model finish
-#   3. Add docstring to each function
-#   4. caching in different files for each passage
-#   5. create a command for each step separately
-# correct letter bug
+#   1. Add docstring to each function
+#   2. caching in different files for each passage
+#   3. create a command for each step separately
 
+
+# Explicitly specify the path to your .env file
+dotenv_path = Path.home() / "cabbage_eval" / ".env"
+print(f"Loading .env from: {dotenv_path}")
+load_dotenv(dotenv_path=dotenv_path)
 
 def run_pipeline(config_path: Path):
     """Main function to run the model evaluation pipeline."""
     
-    from llm_eval.utils.configuration import load_main_config
-
     config = load_main_config(config_path)
     if not config:
         return
-    # Load environment variables
-    load_dotenv()
-    
-    # print("\n######### DATASET PREPARATION #########\n")
-    # # Generate requests based on the config file
-    # experiments = llm_eval.request_generation.generate_experiment_inputs(config)
 
     print("\n######### MODELS INFERENCE #########\n")
     # Run models inference
-    llm_eval.model_inference.run_model_inference(config, [], use_cache=False)
+    llm_eval.model_inference.run_model_inference(config, use_cache=False)
 
     print("\n######### PROCESSING RESULTS #########\n")
     # Process results

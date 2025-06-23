@@ -43,7 +43,7 @@ class ModelInferenceRunner:
             client = LLMClient(
                 model_name=model.model,
                 base_url=model.base_url or "",
-                api_key=os.getenv(model.api_key, '') if model.api_key else '',
+                api_key=os.getenv(model.api_key_env_var, '') if model.api_key_env_var else '',
                 timeout=model.timeout or 120
             )
 
@@ -89,7 +89,7 @@ class ModelInferenceRunner:
         ]
         save_jsonl(model_path / f"{experiment.name}.jsonl", docs)
 
-def run_model_inference(config: MainConfig, experiments: List[Experiment], use_cache: bool = True) -> None:
+def run_model_inference(config: MainConfig, use_cache: bool = True) -> None:
     experiments = generate_experiment_inputs(config)
     runner = ModelInferenceRunner(config, use_cache)
     runner.run(experiments)

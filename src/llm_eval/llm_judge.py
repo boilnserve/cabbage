@@ -173,7 +173,7 @@ class LLMJudge:
     
     def evaluate_until(self, examples: List[Dict]) -> List[Dict]:
         async def _run_all():
-            async with openai.AsyncClient(base_url=self.evaluator.base_url,api_key=os.getenv(self.evaluator.api_key)) as client:
+            async with openai.AsyncClient(base_url=self.evaluator.base_url,api_key=os.getenv(self.evaluator.api_key_env_var)) as client:
                 tasks = [self.evaluate(ex['original_doc'], ex['inference_result'].get('model_answer'), client) for ex in examples]
                 return await tqdm.asyncio.tqdm_asyncio.gather(*tasks, desc=f"[{self.model_name}] Generating")
         return asyncio.run(_run_all())

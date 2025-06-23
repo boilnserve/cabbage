@@ -3,6 +3,16 @@ from typing import Optional, List, Dict
 from pathlib import Path
 from llm_eval.utils.file_io import load_yaml
 from loguru import logger
+import os
+
+
+def validate_api_key_env(v: Optional[str]) -> Optional[str]:
+    if v:
+        value = os.environ.get(v)
+        if value is None or value.strip() == "":
+            raise ValueError(f"Environment variable '{v}' is missing or empty for api_key_env_var.")
+        return value
+    return v
 
 # Add a new handler, print only the message (plus optional coloring)
 class ProviderConfig(BaseModel):
@@ -10,15 +20,25 @@ class ProviderConfig(BaseModel):
     model: str
     provider: Optional[str] = None
     base_url: Optional[str] = None
-    api_key: Optional[str] = None
+    api_key_env_var: Optional[str] = None
     timeout: Optional[int] = None
     server_args: Optional[dict] = None
+    
+    @field_validator("api_key_env_var")
+    @classmethod
+    def validate_api_key_env_var(cls, v):
+        return validate_api_key_env(v)
 
 class EvaluatorConfig(BaseModel):
     name: str
     model: str
     base_url: str
-    api_key: str
+    api_key_env_var: str
+    
+    @field_validator("api_key_env_var")
+    @classmethod
+    def validate_api_key_env_var(cls, v):
+        return validate_api_key_env(v)
 
 class DefaultParameters(BaseModel):
     max_new_tokens: int
@@ -103,6 +123,9 @@ class ExperimentConfig(BaseModel):
     dataset: DatasetConfig
     model_input: ModelInputConfig
     process_results: ProcessResultsConfig
+    
+    class Config:
+        protected_namespaces = ()
 
 # ---- YAML LOADERS ----
 
@@ -114,25 +137,43 @@ def load_main_config(path: Path) -> MainConfig | None:
         config.evaluators.prompts_dict = load_yaml(config.paths.evaluation_prompts)
         return config
     except ValidationError as e:
-        print("\nCONFIGURATION ERROR:")
+        print("\nCONFIGURATION ERROR in main config file:", path)
         for err in e.errors():
-            print(f"  - {err['msg']}")
-        print("\nPlease check your configuration file and the above error(s).")
+            loc = " -> ".join(str(x) for x in err['loc'])
+            msg = err['msg']
+            type_ = err.get("type", "unknown")
+            print(f"  - [{loc}] {msg} (type: {type_})")
+        print("\nPlease check your configuration file and correct the missing or invalid fields.\n")
+        return None
+
 
 def load_experiment_config(path: Path) -> ExperimentConfig:
-    raw = load_yaml(path)
-    return ExperimentConfig(**raw)
+    try:
+        raw = load_yaml(path)
+        return ExperimentConfig(**raw)
+    except ValidationError as e:
+        print(f"\nCONFIGURATION ERROR in experiment config file: {path}")
+        for err in e.errors():
+            loc = " -> ".join(str(x) for x in err['loc'])
+            msg = err['msg']
+            type_ = err.get("type", "unknown")
+            print(f"  - [{loc}] {msg} (type: {type_})")
+        print("\nPlease fix the above issue(s) in:", path.name)
+        raise ValueError(f"Failed to load configuration from {path}")
 
 def load_experiments_config(experiments_dir: Path) -> Dict[str, ExperimentConfig]:
     config_dict = {}
     for file in experiments_dir.glob("*.yaml"):
         try:
             config = load_experiment_config(file)
-            name = config.dataset.name
-            if name:
-                config_dict[name] = config
+            if config:
+                name = config.dataset.name
+                if name:
+                    config_dict[name] = config
+                else:
+                    logger.warning(f"No dataset name in {file.name}, skipping.")
             else:
-                logger.warning(f"No dataset name in {file.name}, skipping.")
+                logger.warning(f"Problem in the configuration loading for file: {file}.")
         except Exception as e:
             logger.warning(f"Failed loading {file}: {e}")
     return config_dict
