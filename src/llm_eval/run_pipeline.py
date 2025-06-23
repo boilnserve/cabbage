@@ -15,7 +15,7 @@ from llm_eval.utils.configuration import load_main_config
 
 
 # Explicitly specify the path to your .env file
-dotenv_path = Path.home() / "cabbage_eval" / ".env"
+dotenv_path = Path.home() / "cabbage" / ".env"
 print(f"Loading .env from: {dotenv_path}")
 load_dotenv(dotenv_path=dotenv_path)
 
