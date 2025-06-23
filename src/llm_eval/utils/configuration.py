@@ -10,7 +10,7 @@ def validate_api_key_env(v: Optional[str]) -> Optional[str]:
     if v:
         value = os.environ.get(v)
         if value is None or value.strip() == "":
-            raise ValueError(f"Environment variable '{v}' is missing or empty for api_key_env_var.")
+            raise ValueError(f"Environment variable '{v}' is missing or empty (modify the .env file).")
         return value
     return v
 
