@@ -35,20 +35,20 @@ You can also explore the **CABBAGE dataset** on Hugging Face:
 Set your API keys and other secrets in the `.env` file at the project root.  
 Edit `.env` and fill in the appropriate values. Example:
 OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=...
+GOOGLE_API_KEY=...
 
 
 ---
 
 ### 2. Experiment Settings
 
-- All experiment parameters (models, evaluation pipeline, etc.) are defined in `docs/all_experiments.yaml`.
+- All experiment parameters (models, evaluation pipeline, etc.) are defined in `configs/all_experiments.yaml`.
 - Edit this file to:
     - Change experiment names, dataset or output paths, etc.
     - Customize which models to evaluate and judge.
     - Modify any other experiment settings.
 
-You can also create or modify additional YAML files within the `docs/` and `experiment_configs/` directories as needed for custom experiments.
+You can also create or modify additional YAML files within the `configs/` and `experiment_configs/` directories as needed for custom experiments.
 
 ---
 
@@ -56,7 +56,7 @@ You can also create or modify additional YAML files within the `docs/` and `expe
 
 After setup and configuration, run your experiment with:
 ```sh
-llm_eval -c docs/all_experiments.yaml
+llm_eval -c configs/all_experiments.yaml
 ```
 
 This will execute the pipeline as defined in your YAML configuration.
