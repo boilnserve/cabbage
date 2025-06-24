@@ -4,7 +4,7 @@ paths:
   evaluation_prompts: src/llm_eval/utils/evaluation_prompts.yaml
 
 experiments:
-  limit: 10
+  limit: None
   use_all: true  # overrides dataset filtering
   datasets:
     - embrapa

@@ -1,0 +1,31 @@
+paths:
+  experiments_directory: experiment_configs
+  results_directory: results_minimal
+  evaluation_prompts: src/llm_eval/utils/evaluation_prompts.yaml
+
+experiments:
+  limit: 5
+  use_all: false
+  datasets:
+    - embrapa
+
+models:
+  default_parameters:
+    max_new_tokens: 512
+    temperature: 0.1
+  providers:
+    - name: openai-mini
+      model: gpt-4.1-mini
+      provider: openai
+      base_url: https://api.openai.com/v1
+      api_key_env_var: OPENAI_API_KEY
+
+evaluators:
+  default_parameters:
+    max_new_tokens: 1024
+    temperature: 0.0
+  providers:
+    - name: openai
+      model: gpt-4.1
+      base_url: https://api.openai.com/v1
+      api_key_env_var: OPENAI_API_KEY 

@@ -1,0 +1,51 @@
+paths:
+  experiments_directory: experiment_configs
+  results_directory: results_local
+  evaluation_prompts: src/llm_eval/utils/evaluation_prompts.yaml
+
+experiments:
+  limit: 10
+  use_all: false
+  datasets:
+    - plantnet_single
+    - plantnet_multi
+
+models:
+  default_parameters:
+    max_new_tokens: 1024
+    temperature: 0.2
+  providers:
+    - name: qwen-vl-7b
+      model: Qwen/Qwen2-VL-7B-Instruct
+      provider: local
+      base_url: http://127.0.0.1:8000/v1
+      api_key_env_var: null
+      timeout: 120
+      server_args:
+        chat_template: qwen2-vl
+        dp_size: 6
+        tp_size: 1
+    - name: qwen-vl-72b
+      model: Qwen/Qwen2-VL-72B-Instruct
+      provider: local
+      base_url: http://127.0.0.1:8000/v1
+      api_key_env_var: null
+      timeout: 400
+      server_args:
+        chat_template: qwen2-vl
+        dp_size: 1
+        tp_size: 4
+
+evaluators:
+  default_parameters:
+    max_new_tokens: 2048
+    temperature: 0.0
+  providers:
+    - name: qwen-vl-7b
+      model: Qwen/Qwen2-VL-7B-Instruct
+      base_url: http://127.0.0.1:8000/v1
+      api_key_env_var: null
+    - name: qwen-vl-72b
+      model: Qwen/Qwen2-VL-72B-Instruct
+      base_url: http://127.0.0.1:8000/v1
+      api_key_env_var: null 

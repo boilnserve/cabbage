@@ -1,0 +1,38 @@
+paths:
+  experiments_directory: experiment_configs
+  results_directory: results_custom_datasets
+  evaluation_prompts: src/llm_eval/utils/evaluation_prompts.yaml
+
+experiments:
+  limit: 20
+  use_all: false
+  datasets:
+    - cca_ceu
+    - agriexam
+    - wikihow_missing
+
+models:
+  default_parameters:
+    max_new_tokens: 1024
+    temperature: 0.3
+  providers:
+    - name: openai-standard
+      model: gpt-4.1
+      provider: openai
+      base_url: https://api.openai.com/v1
+      api_key_env_var: OPENAI_API_KEY
+
+
+evaluators:
+  default_parameters:
+    max_new_tokens: 2048
+    temperature: 0.0
+  providers:
+    - name: openai-standard
+      model: gpt-4.1
+      base_url: https://api.openai.com/v1
+      api_key_env_var: OPENAI_API_KEY
+    - name: openai-standard
+      model: gpt-4.1-mini
+      base_url: https://api.openai.com/v1
+      api_key_env_var: OPENAI_API_KEY

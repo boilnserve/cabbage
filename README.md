@@ -39,7 +39,7 @@ GOOGLE_API_KEY=...
 
 ### 2. Experiment Settings
 
-- All experiment parameters (models, evaluation pipeline, etc.) are defined in `configs/all_experiments.yaml`.
+- All parameters (models, evaluation pipeline, etc.) are defined in `configs/` files.
 - Edit this file to:
     - Change experiment names, dataset or output paths, etc.
     - Customize which models to evaluate and judge.
@@ -50,16 +50,22 @@ GOOGLE_API_KEY=...
 
 ## 🏃 Usage
 
-After setup and configuration, run your experiment pipeline with:
+After setup and configuration, you can quickly check if everything is working correctly by running a simple test:
 ```sh
-llm_eval all -c configs/all_experiments.yaml
+llm_eval all -c configs/minimal_example.yaml
+```
+This will run a minimal experiment to verify your installation and configuration.
+
+To run the full benchmark on all datasets and models, use:
+```sh
+llm_eval all -c configs/all_experiments_unlimited.yaml
 ```
 
 Or run individual steps:
 ```sh
-llm_eval inference -c configs/all_experiments.yaml   # Only inference
-llm_eval process -c configs/all_experiments.yaml     # Only process results
-llm_eval aggregate -c configs/all_experiments.yaml   # Only aggregate results
+llm_eval inference -c configs/all_experiments_unlimited.yaml   # Only inference
+llm_eval process -c configs/all_experiments_unlimited.yaml     # Only process results
+llm_eval aggregate -c configs/all_experiments_unlimited.yaml   # Only aggregate results
 ```
 
 - The `-c`/`--config` flag specifies the main YAML config file.
