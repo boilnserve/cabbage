@@ -12,7 +12,6 @@ Dive into the repo and start benchmarking: everything you need to grow your agri
 You can also explore the **CABBAGE dataset** on Hugging Face:  
 👉 [boilnserve/cabbage](https://huggingface.co/datasets/boilnserve/cabbage)
 
----
 
 ## 🚀 Installation
 
@@ -26,7 +25,6 @@ You can also explore the **CABBAGE dataset** on Hugging Face:
     ```sh
     pip install -e .
     ```
----
 
 ## ⚙️ Configuration
 
@@ -38,7 +36,6 @@ OPENAI_API_KEY=sk-...
 GOOGLE_API_KEY=...
 
 
----
 
 ### 2. Experiment Settings
 
@@ -47,19 +44,34 @@ GOOGLE_API_KEY=...
     - Change experiment names, dataset or output paths, etc.
     - Customize which models to evaluate and judge.
     - Modify any other experiment settings.
+- You can also create or modify additional YAML files within the `configs/` and `experiment_configs/` directories as needed for custom experiments.
 
-You can also create or modify additional YAML files within the `configs/` and `experiment_configs/` directories as needed for custom experiments.
 
----
 
 ## 🏃 Usage
 
-After setup and configuration, run your experiment with:
+After setup and configuration, run your experiment pipeline with:
 ```sh
-llm_eval -c configs/all_experiments.yaml
+llm_eval all -c configs/all_experiments.yaml
 ```
 
-This will execute the pipeline as defined in your YAML configuration.
+Or run individual steps:
+```sh
+llm_eval inference -c configs/all_experiments.yaml   # Only inference
+llm_eval process -c configs/all_experiments.yaml     # Only process results
+llm_eval aggregate -c configs/all_experiments.yaml   # Only aggregate results
+```
+
+- The `-c`/`--config` flag specifies the main YAML config file.
+- All experiment and model settings are controlled via YAML files in `configs/` and `experiment_configs/`.
+
+
+## 🧩 Extending Cabbage
+
+- **Add new experiments**: Place new YAML files in `experiment_configs/` and reference them in your main config.
+- **Add new models**: Edit the `models` section in your config YAML and provide API keys in `.env` as needed.
+- **Custom evaluators**: Implement a new evaluator class in `evaluators.py` and register it in `EVALUATOR_REGISTRY`.
+- **Custom pipelines**: Modify or extend `run_pipeline.py` for new workflows.
 
 ---
 
