@@ -10,7 +10,7 @@ model_input:
     post_prompt: ""
 
 process_results: 
-    metric: g_eval
+    metric: llm_judge
     evaluation_type: procedural
     
 
