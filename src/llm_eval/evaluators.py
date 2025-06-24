@@ -14,6 +14,7 @@ from llm_eval.utils.file_io import load_jsonl, save_jsonl
 from collections import defaultdict
 
 def compute_per_example_agreement(scores_by_judge: Dict[str, Dict[str, float]]) -> Dict[str, float]:
+    """Compute agreement scores per metric across judges. Args: scores_by_judge: Dict mapping judge names to metric scores. Returns: Dict of agreement scores per metric."""
     from itertools import combinations
     from statistics import mean
     agreement_per_metric = {}
@@ -35,26 +36,33 @@ def compute_per_example_agreement(scores_by_judge: Dict[str, Dict[str, float]]) 
     return agreement_per_metric
 
 def normalize_text(text: str) -> str:
+    """Normalize text by lowercasing, removing certain phrases, and stripping punctuation. Args: text: Input string. Returns: Normalized string."""
     text = text.lower()
     text = re.sub(r'\b(the answer is|answer:)\b', '', text)
     text = text.translate(str.maketrans('', '', string.punctuation))
     return ' '.join(text.split())
 class BaseEvaluator(ABC):
+    """Abstract base class for all evaluators."""
     def __init__(self, config: MainConfig, experiment_config: ExperimentConfig, use_cache):
+        """Initialize the evaluator with configs and cache flag. Args: config: MainConfig object. experiment_config: ExperimentConfig object. use_cache: Whether to use cache."""
         self.config=config
         self.experiment_config=experiment_config
         self.use_cache = use_cache
         
     @abstractmethod
     def evaluate_all(self, examples: List[Dict]) -> List[List[Dict]]:
+        """Evaluate all examples and return results. Args: examples: List of example dictionaries. Returns: List of lists of result dictionaries."""
         pass
     
     @abstractmethod
     def evaluate_and_save(self, experiment_file: Path) -> None:
+        """Evaluate and save results to the experiment file. Args: experiment_file: Path to the experiment file."""
         pass
 
 class ExactMatchEvaluator(BaseEvaluator):
+    """Evaluator for exact match between model output and accepted answers."""
     def evaluate_all(self, examples: List[Dict]) -> List[List[Dict]]:
+        """Evaluate all examples for exact match. Args: examples: List of example dictionaries. Returns: List of lists of result dictionaries."""
         results = []
         for example in examples:
             targets_norm = [normalize_text(t) for t in example['original_doc']['accepted_answers']]
@@ -74,6 +82,7 @@ class ExactMatchEvaluator(BaseEvaluator):
         return results
     
     def evaluate_and_save(self, experiment_file: Path) -> None:
+        """Evaluate and save exact match results to the experiment file. Args: experiment_file: Path to the experiment file."""
         examples = load_jsonl(str(experiment_file))
         results = []
         for example in examples:
@@ -96,7 +105,9 @@ class ExactMatchEvaluator(BaseEvaluator):
         save_jsonl(experiment_file, examples)
     
 class OptionMatchEvaluator(BaseEvaluator):
+    """Evaluator for matching model output to the correct option letter."""
     def evaluate_all(self, examples: List[Dict]) -> List[List[Dict]]:
+        """Evaluate all examples for option match. Args: examples: List of example dictionaries. Returns: List of lists of result dictionaries."""
         results = []
         for example in examples:
             model_output = example['inference_result'].get('model_answer')
@@ -121,6 +132,7 @@ class OptionMatchEvaluator(BaseEvaluator):
         return results
     
     def evaluate_and_save(self, experiment_file: Path) -> None:
+        """Evaluate and save option match results to the experiment file. Args: experiment_file: Path to the experiment file."""
         results = []
         examples = load_jsonl(str(experiment_file))
         for example in examples:
@@ -148,10 +160,13 @@ class OptionMatchEvaluator(BaseEvaluator):
         save_jsonl(experiment_file, examples)
 
 class LLMJudgeEvaluator(BaseEvaluator):
+    """Evaluator that uses an LLM judge to evaluate model outputs."""
     def evaluate_all(self, examples: List[Dict]) -> List[List[Dict]]:
+        """Evaluate all examples using the LLM judge. Args: examples: List of example dictionaries. Returns: List of lists of result dictionaries."""
         return []
     
     def evaluate_and_save(self, experiment_file: Path) -> None:
+        """Evaluate and save LLM judge results to the experiment file. Args: experiment_file: Path to the experiment file."""
         prompts_dict = self.config.evaluators.prompts_dict
         all_provider_results = []
         examples = load_jsonl(str(experiment_file))
@@ -210,5 +225,6 @@ EVALUATOR_REGISTRY = {
 }
 
 def get_evaluator(eval_type, config, experiment_config, use_cache):
+    """Get the evaluator class instance for the given type. Args: eval_type: Type of evaluator. config: MainConfig object. experiment_config: ExperimentConfig object. use_cache: Whether to use cache. Returns: Evaluator class instance."""
     evaluator_cls = EVALUATOR_REGISTRY[eval_type]
     return evaluator_cls(config, experiment_config, use_cache)

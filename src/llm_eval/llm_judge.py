@@ -16,7 +16,9 @@ NUM_SECONDS_TO_SLEEP = 10
 RETRIES = 5
 
 class LLMJudge:
+    """Judge class for evaluating model outputs using LLMs with different evaluation types and response handlers."""
     def __init__(self, evaluator: EvaluatorConfig, evaluation_type: Optional[str], prompts_dict: Dict) -> None:
+        """Initialize the LLMJudge with evaluator config, evaluation type, and prompts. Args: evaluator: EvaluatorConfig object. evaluation_type: Type of evaluation ('knowledge' or 'procedural'). prompts_dict: Dictionary of prompt templates."""
         self.model_name = evaluator.model
         # self.client = openai.AsyncClient(
         #     base_url=evaluator.base_url,
@@ -44,6 +46,7 @@ class LLMJudge:
             raise ValueError(f"Unsupported model name: {self.model_name}")
 
     def prepare_prompt(self, doc: Dict[str, str], model_answer: str) -> Optional[str]:
+        """Prepare the evaluation prompt for the LLM. Args: doc: The question document. model_answer: The model's answer. Returns: The formatted prompt string or None if invalid."""
         if model_answer in ["Error", "=Copy the answer="]:
             model_answer = doc.get("answer", "") if model_answer == "=Copy the answer=" else ""
 
@@ -61,6 +64,7 @@ class LLMJudge:
             return None
 
     async def _retry_with_backoff(self, func: Callable[..., Awaitable], *args, **kwargs) -> Tuple:
+        """Retry an async function with exponential backoff. Args: func: The async function to call. *args, **kwargs: Arguments to pass to the function. Returns: The result of the function or ("", "") if all retries fail."""
         for attempt in range(RETRIES):
             try:
                 return await func(*args, **kwargs)
@@ -73,6 +77,7 @@ class LLMJudge:
         return "",""
     
     async def _handle_deepseek(self, content: str, client) -> Tuple:
+        """Handle evaluation using the DeepSeek model. Args: content: The prompt content. client: The async client. Returns: Tuple of (parsed response, scores)."""
         async def call():
             completion = await client.chat.completions.create(
                 model=self.model_name,
@@ -95,6 +100,7 @@ class LLMJudge:
         return await self._retry_with_backoff(call)
 
     async def _handle_gpt(self, content: str, client) -> Tuple:
+        """Handle evaluation using the GPT model. Args: content: The prompt content. client: The async client. Returns: Tuple of (parsed response, scores)."""
         async def call():
             completion = await client.beta.chat.completions.parse(
                 model=self.model_name,
@@ -114,6 +120,7 @@ class LLMJudge:
         return await self._retry_with_backoff(call)
 
     async def _handle_gemini(self, content: str, client) -> Tuple:
+        """Handle evaluation using the Gemini model. Args: content: The prompt content. client: The async client. Returns: Tuple of (parsed response, scores)."""
         async def call():
             completion = await client.beta.chat.completions.parse(
                 model=self.model_name,
@@ -136,9 +143,11 @@ class LLMJudge:
         return await self._retry_with_backoff(call)
 
     async def get_response(self, content: str, client) -> Tuple:
+        """Get the model's response using the appropriate handler. Args: content: The prompt content. client: The async client. Returns: Tuple of (parsed response, scores)."""
         return await self._response_handler(content, client)
 
     async def evaluate(self, doc: Dict[str, str], model_output: str, client) -> Dict:
+        """Evaluate a single model output using the LLM. Args: doc: The question document. model_output: The model's answer. client: The async client. Returns: Dictionary with evaluation results and scores."""
         if not model_output:
             logger.error("Empty model output received.")
             return {"scores": "invalid_format"}
@@ -172,6 +181,7 @@ class LLMJudge:
             return {"scores": "invalid_format"}
     
     def evaluate_until(self, examples: List[Dict]) -> List[Dict]:
+        """Evaluate a list of examples until completion. Args: examples: List of example dictionaries. Returns: List of evaluation results."""
         async def _run_all():
             async with openai.AsyncClient(base_url=self.evaluator.base_url,api_key=os.getenv(self.evaluator.api_key_env_var)) as client:
                 tasks = [self.evaluate(ex['original_doc'], ex['inference_result'].get('model_answer'), client) for ex in examples]

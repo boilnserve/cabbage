@@ -23,40 +23,6 @@ def invalid_format_aggregation(results: List[Any]) -> Union[float, None]:
         logger.error(f"Error during invalid format aggregation: {e}")
         return None
 
-# def aggregate_results(model_dir: Path) -> Dict[str, Any]:
-#     """Aggregate results from JSONL files in the specified directory."""
-#     aggregated_results = {}
-#     for file_path in tqdm(model_dir.glob("*.jsonl"), desc=f"Processing {model_dir.name}", unit=" file"):
-#         task_name = file_path.stem
-#         records = load_jsonl(str(file_path))
-#         # {model: {'metric': value, ...}, ...}
-#         list_of_scores = [
-#             {pr.get('model', 'default'): pr['result']['scores']
-#              for pr in r['process_results'] if 'result' in pr and 'scores' in pr['result']}
-#             for r in records
-#         ]
-#         model_scores = defaultdict(lambda: defaultdict(list))
-#         # Collect scores
-#         for entry in list_of_scores:
-#             for model, scores in entry.items():
-#                 for metric, value in scores.items():
-#                     model_scores[model][metric].append(value)
-#         # Compute mean scores
-#         mean_scores = {
-#             model: {
-#                 metric: round(np.mean(values), 2)
-#                 for metric, values in metrics.items()
-#             }
-#             for model, metrics in model_scores.items()
-#         }
-#         # Sort mean_scores by model name (alphabetically)
-#         sorted_mean_scores = {model: dict(sorted(metrics.items()))
-#                               for model, metrics in sorted(mean_scores.items())}
-#         aggregated_results[task_name] = sorted_mean_scores
-#     # Sort the aggregated results by task name (alphabetically)
-#     sorted_aggregated_results = dict(sorted(aggregated_results.items()))
-#     return sorted_aggregated_results
-
 def aggregate_results(model_dir: Path) -> Dict:
     """Aggregate results from JSONL files in the specified directory."""
     aggregated_results = {}
@@ -68,7 +34,7 @@ def aggregate_results(model_dir: Path) -> Dict:
         # Extract model scores
         list_of_scores = [
             {pr.get('model', 'default'): pr['result']['scores']
-             for pr in r['process_results'] if 'result' in pr and 'scores' in pr['result']}
+                for pr in r['process_results'] if 'result' in pr and 'scores' in pr['result']}
             for r in records
         ]
 

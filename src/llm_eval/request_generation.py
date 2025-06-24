@@ -12,6 +12,7 @@ from llm_eval.utils.configuration import MainConfig, ExperimentConfig, load_expe
 # ---------- Utility Functions ----------
 
 def filter_dataset(ds: Dataset, filters: Dict) -> Dataset:
+    """Filter a HuggingFace Dataset according to the provided filters. Args: ds: The input Dataset. filters: Dictionary of filter criteria. Returns: Filtered Dataset."""
     if not filters:
         return ds
     if 'difficulty' in filters:
@@ -26,9 +27,7 @@ def prepare_dataset(
     exp_conf: ExperimentConfig, 
     global_conf: MainConfig
 ) -> Dataset:
-    """
-    Loads and filters the dataset according to experiment and general config.
-    """
+    """Load and filter the dataset according to experiment and general config. Args: exp_conf: ExperimentConfig object. global_conf: MainConfig object. Returns: Filtered Dataset."""
     ds_raw = load_dataset(str(exp_conf.dataset.path), name=exp_conf.dataset.subset,split=exp_conf.dataset.split)
     ds = cast(Dataset, ds_raw)
     if not isinstance(ds, Dataset):
@@ -46,6 +45,7 @@ def prepare_dataset(
 
 @dataclass
 class ExperimentInput:
+    """Data structure for a single experiment input, including doc, visuals, prompt, and generation kwargs."""
     doc: Dict
     visuals: List[Any]
     input: str
@@ -55,6 +55,7 @@ class ExperimentInput:
 
 @dataclass
 class Experiment:
+    """Data structure for an experiment, including dataset, config, and requests."""
     name: str
     dataset: Dataset
     experiment_config: ExperimentConfig
@@ -63,6 +64,7 @@ class Experiment:
 
     @classmethod
     def from_config(cls, experiment_path: Path, general_config: MainConfig) -> "Experiment":
+        """Create an Experiment instance from a config file and general config. Args: experiment_path: Path to the experiment YAML. general_config: MainConfig object. Returns: Experiment instance."""
         exp_conf = load_experiment_config(experiment_path)
         instance = cls(
             name=exp_conf.dataset.name,
@@ -74,6 +76,7 @@ class Experiment:
         return instance
 
     def _create_requests(self) -> None:
+        """Populate the requests list for this experiment from the dataset."""
         if not self.dataset:
             raise ValueError(f"Dataset not loaded for experiment '{self.name}'")
         for doc in tqdm(self.dataset, desc=f"Preparing {self.name}"):
@@ -92,9 +95,7 @@ class Experiment:
 # ---------- experiment Loading + Pipeline ----------
 
 def load_experiments(config: MainConfig) -> List[Experiment]:
-    """
-    Loads all experiment YAMLs from the directory in config, filtered according to config.experiments.datasets or use_all.
-    """
+    """Load all experiment YAMLs from the directory in config, filtered by datasets or use_all. Args: config: MainConfig object. Returns: List of Experiment objects."""
     experiments_dir = config.paths.experiments_directory
     use_all = config.experiments.use_all
     allowed_datasets = None if use_all else set(config.experiments.datasets)
@@ -113,9 +114,7 @@ def load_experiments(config: MainConfig) -> List[Experiment]:
     return experiments
 
 def generate_experiment_inputs(config: MainConfig) -> List[Experiment]:
-    """
-    Loads all relevant experiments (as Experiment dataclass instances) using the fully validated MainConfig object.
-    """
+    """Load all relevant experiments as Experiment dataclass instances using the validated MainConfig. Args: config: MainConfig object. Returns: List of Experiment objects."""
     try:
         experiments = load_experiments(config)
         if not experiments:

@@ -8,7 +8,7 @@ TEMP = 5
 SCORES = ['1', '2', '3', '4', '5']
 
 def find_score_token_index(target_word: str, tokens: List) -> Optional[int]:
-    """Finds the index of the score token in a token sequence."""
+    """Find the index of the score token in a token sequence. Args: target_word: The word to search for. tokens: List of token objects. Returns: Index of the score token if found, else None."""
     reconstructed = ""
     token_map = []
 
@@ -28,7 +28,7 @@ def find_score_token_index(target_word: str, tokens: List) -> Optional[int]:
 
 
 def compute_geval_score(top_logprobs, valid_scores: List[str] = SCORES, temp: float = TEMP) -> float:
-    """Computes weighted score from token logprobs."""
+    """Compute a weighted score from token logprobs. Args: top_logprobs: List of token logprob objects. valid_scores: List of valid score strings. temp: Temperature for scaling logprobs. Returns: Weighted score as a float."""
     probs = {
         tok.token: math.exp(tok.logprob / temp)
         for tok in top_logprobs if tok.token in valid_scores
@@ -41,7 +41,7 @@ def compute_geval_score(top_logprobs, valid_scores: List[str] = SCORES, temp: fl
 
 
 def extract_geval_scores(completion) -> Dict[str, float]:
-    """Extract G-Eval scores from model completion."""
+    """Extract G-Eval scores from a model completion object. Args: completion: Model completion object. Returns: Dictionary mapping score names to computed scores."""
     raw_scores = json.loads(completion.choices[0].message.content)['scores']
     score_names = list(raw_scores.keys())
 

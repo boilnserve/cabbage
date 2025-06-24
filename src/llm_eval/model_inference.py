@@ -15,7 +15,9 @@ from llm_eval.utils.configuration import MainConfig
 from llm_eval.request_generation import generate_experiment_inputs
 
 class ModelInferenceRunner:
+    """Runs model inference for all configured models and experiments, handling caching and result storage."""
     def __init__(self, config: MainConfig, use_cache: bool) -> None:
+        """Initialize the runner with config and cache flag. Args: config: MainConfig object. use_cache: Whether to use cache for experiments."""
         self.config = config
         self.models = self.config.models.providers
         self.results_dir = self.config.paths.results_directory
@@ -24,6 +26,7 @@ class ModelInferenceRunner:
         self.use_cache = use_cache
 
     def run(self, experiments: List[Experiment]) -> None:
+        """Run inference for all models and experiments. Args: experiments: List of Experiment objects to process."""
         self.results_dir.mkdir(parents=True, exist_ok=True)
         for model in self.models:
             model_name = model.model
@@ -69,11 +72,13 @@ class ModelInferenceRunner:
                 terminate_process(server_process)
 
     def _filter_experiments(self, experiments: List[Experiment], model_path: Path) -> List[Experiment]:
+        """Filter out experiments that have already been processed (by checking for existing result files). Args: experiments: List of Experiment objects. model_path: Path to the model's result directory. Returns: List of experiments to run."""
         existing = {p.stem for p in model_path.glob("*.jsonl")}
         experiments_to_run = [e for e in experiments if e.name not in existing]
         return experiments_to_run
 
     def _save_experiment_results(self, model_path: Path, experiment: Experiment, results: List[Dict[str,str]]) -> None:
+        """Save experiment results to a JSONL file. Args: model_path: Path to the model's result directory. experiment: The Experiment object. results: List of result dictionaries."""
         docs = [
             {
                 'original_doc': {
@@ -90,6 +95,7 @@ class ModelInferenceRunner:
         save_jsonl(model_path / f"{experiment.name}.jsonl", docs)
 
 def run_model_inference(config: MainConfig, use_cache: bool = True) -> None:
+    """Run model inference for all experiments using the provided configuration. Args: config: MainConfig object. use_cache: Whether to use cache for experiments."""
     experiments = generate_experiment_inputs(config)
     runner = ModelInferenceRunner(config, use_cache)
     runner.run(experiments)

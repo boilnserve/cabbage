@@ -5,6 +5,7 @@ import time
 
 
 def launch_server(model_name: str, args: dict) -> subprocess.Popen:
+    """Launch a model server process with the given arguments. Args: model_name: Name or path of the model. args: Dictionary of server arguments. Returns: Popen object for the launched server process."""
     gpus = torch.cuda.device_count()
     command = (
         f"python -m sglang_router.launch_server"
@@ -22,6 +23,7 @@ def launch_server(model_name: str, args: dict) -> subprocess.Popen:
     return subprocess.Popen(command.split(), stdout=stdout_log, stderr=stderr_log)
 
 def wait_for_server(port: int, timeout: int) -> None:
+    """Wait for a server to become ready on the specified port, up to a timeout. Args: port: Port number to check. timeout: Maximum time to wait in seconds. Raises: TimeoutError if the server is not ready in time."""
     base_url = f"http://localhost:{port}"
     start_time = time.time()
     while time.time() - start_time < timeout:

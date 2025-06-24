@@ -4,9 +4,11 @@ import re
 from llm_eval.utils.configuration import ModelInputConfig
 
 def format_options(options_list: List[str]) -> str:
+    """Format a list of options as lettered choices (A., B., ...). Args: options_list: List of option strings. Returns: Formatted string with each option on a new line."""
     return "\n".join([f"{chr(ord('A') + i)}. {opt}" for i, opt in enumerate(options_list)])
 
 def extract_options_and_answer_letter(doc: dict, config: ModelInputConfig) -> Tuple[Optional[List[str]], Optional[str]]:
+    """Extracts the options and the correct answer letter from a document based on the config. Args: doc: The question document. config: ModelInputConfig specifying question type and difficulty. Returns: Tuple of (options list, correct answer letter) or (None, None) if not applicable."""
     if config.question_type != 'multiple_choice':
         return None, None
 
@@ -36,10 +38,12 @@ def extract_options_and_answer_letter(doc: dict, config: ModelInputConfig) -> Tu
     return options_for_difficulty, answer_letter
 
 def get_answer_letter(doc: Dict, config: ModelInputConfig) -> Optional[str]:
+    """Returns the correct answer letter for a multiple-choice question. Args: doc: The question document. config: ModelInputConfig. Returns: The answer letter (A, B, ...) or None."""
     options, answer_letter = extract_options_and_answer_letter(doc, config)
     return answer_letter
 
 def format_prompt(doc: dict, config: ModelInputConfig) -> str:
+    """Formats a prompt for the model, including question, options, and pre/post prompts. Args: doc: The question document. config: ModelInputConfig. Returns: The formatted prompt string."""
     prompt_parts = [config.pre_prompt, f"Question: {doc['question']}"]
     options_list, answer_letter = extract_options_and_answer_letter(doc, config)
     
@@ -50,7 +54,7 @@ def format_prompt(doc: dict, config: ModelInputConfig) -> str:
     return "\n".join(part for part in prompt_parts if part.strip())
 
 def extract_evaluation_step_titles(text: str) -> List[str]:
-    """Extract step titles from evaluation content."""
+    """Extract step titles from evaluation content. Args: text: The evaluation content string. Returns: List of step titles as strings."""
     match = re.search(r"Evaluation Steps:\n(.*?)\n---", text, re.DOTALL)
     if not match:
         return []

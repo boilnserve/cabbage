@@ -7,6 +7,7 @@ import os
 
 
 def validate_api_key_env(v: Optional[str]) -> Optional[str]:
+    """Validate that the environment variable for the API key is set and non-empty. Args: v: Name of the environment variable. Returns: The value of the environment variable if valid, else raises ValueError."""
     if v:
         value = os.environ.get(v)
         if value is None or value.strip() == "":
@@ -16,6 +17,7 @@ def validate_api_key_env(v: Optional[str]) -> Optional[str]:
 
 # Add a new handler, print only the message (plus optional coloring)
 class ProviderConfig(BaseModel):
+    """Configuration for a model provider, including model name, API key, and server arguments."""
     name: str
     model: str
     provider: Optional[str] = None
@@ -30,6 +32,7 @@ class ProviderConfig(BaseModel):
         return validate_api_key_env(v)
 
 class EvaluatorConfig(BaseModel):
+    """Configuration for an evaluator, including model, base URL, and API key."""
     name: str
     model: str
     base_url: str
@@ -41,11 +44,13 @@ class EvaluatorConfig(BaseModel):
         return validate_api_key_env(v)
 
 class DefaultParameters(BaseModel):
+    """Default generation parameters for models or evaluators."""
     max_new_tokens: int
     temperature: float
 
 # ---- PATHS ----
 class PathsConfig(BaseModel):
+    """Configuration for important file and directory paths used in the pipeline."""
     experiments_directory: Path
     results_directory: Path
     evaluation_prompts: Path
@@ -76,20 +81,24 @@ class PathsConfig(BaseModel):
 
 # ---- TOP-LEVEL EXPERIMENTS & MODELS ----
 class ExperimentsConfig(BaseModel):
+    """Configuration for experiment selection and limits."""
     limit: Optional[int] = 0
     use_all: Optional[bool] = False
     datasets: List[str]
 
 class ModelBlockConfig(BaseModel):
+    """Configuration block for model providers and their default parameters."""
     default_parameters: DefaultParameters
     providers: List[ProviderConfig]
 
 class EvaluatorsBlockConfig(BaseModel):
+    """Configuration block for evaluators and their default parameters."""
     default_parameters: DefaultParameters
     providers: List[EvaluatorConfig]
     prompts_dict: Dict[str,str] = {}
 
 class MainConfig(BaseModel):
+    """Top-level configuration for the entire pipeline, including paths, experiments, models, and evaluators."""
     paths: PathsConfig
     experiments: ExperimentsConfig
     models: ModelBlockConfig
@@ -102,6 +111,7 @@ class MainConfig(BaseModel):
 
 # ---- NEW: DATASET CONFIG ----
 class DatasetConfig(BaseModel):
+    """Configuration for a dataset, including name, path, subset, split, and filters."""
     name: str
     path: Optional[str] = None
     subset: Optional[str] = None
@@ -110,12 +120,14 @@ class DatasetConfig(BaseModel):
 
 # ---- EXPERIMENT FILE SCHEMA ----
 class ModelInputConfig(BaseModel):
+    """Configuration for model input formatting, including question type and prompt templates."""
     question_type: str
     pre_prompt: Optional[str] = ""
     post_prompt: Optional[str] = ""
     difficulty: Optional[str] = None
 
 class ProcessResultsConfig(BaseModel):
+    """Configuration for processing results, including metric and evaluation type."""
     metric: str
     evaluation_type: Optional[str] = None
 

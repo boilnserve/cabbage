@@ -5,6 +5,7 @@ from llm_eval.evaluators import get_evaluator
 
 
 def process_inference_results(config: MainConfig, use_cache: bool = True) -> None:
+    """Process inference results for all models and experiments, applying the appropriate evaluator and saving results. Args: config: MainConfig object. use_cache: Whether to use cache for processing results."""
     experiments_dir = config.paths.experiments_directory
     results_dir = config.paths.results_directory
 
